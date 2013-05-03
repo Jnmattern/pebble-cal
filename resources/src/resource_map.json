@@ -1,0 +1,11 @@
+{"friendlyVersion": "1.0",
+    "versionDefName": "APP_RESOURCES",
+    "media":
+    [
+     {
+     "type":     "png",
+     "defName":"IMAGE_MENU_ICON",
+     "file":"images/menu_icon.png"
+     }
+     ]
+}
