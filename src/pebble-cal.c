@@ -361,7 +361,7 @@ void updateMonth(Layer *layer, GContext *ctx) {
 	// Week numbers
 	for (i=0, d=first; i<=numWeeks; i++, d.day+=7) {
 		xsprintf(numStr, "%d", weekNumber(&d));
-		graphics_text_draw(ctx, numStr, f, GRect(DX, dy+DH*(i+1), DW, DH), GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+		graphics_text_draw(ctx, numStr, f, GRect(DX, dy+DH*(i+1)-1, DW, DH), GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
 	}
 	
 	// Day numbers
