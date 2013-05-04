@@ -18,8 +18,8 @@
 #define NWD_FRANCE 1
 #define NWD_MAX 2
 
-#define LANG_CUR LANG_FRENCH
-#define NWD_COUNTRY NWD_FRANCE
+#define LANG_CUR LANG_SPANISH
+#define NWD_COUNTRY NWD_NONE
 #define WEEK_STARTS_ON_SUNDAY false
 
 #if LANG_CUR == LANG_DUTCH
@@ -438,13 +438,10 @@ void select_single_click_handler(ClickRecognizerRef recognizer, Window *window) 
 	displayedYear = today.year;
 	
 	updateMonthText();
-	layer_mark_dirty(&monthLayer);
-	
+	layer_mark_dirty(&monthLayer);	
 }
 
 void click_config_provider(ClickConfig **config, Window *window) {
-	(void)window;
-	
 	config[BUTTON_ID_SELECT]->click.handler = (ClickHandler) select_single_click_handler;
 	
 	config[BUTTON_ID_UP]->click.handler = (ClickHandler) up_single_click_handler;
@@ -456,6 +453,10 @@ void click_config_provider(ClickConfig **config, Window *window) {
 	config[BUTTON_ID_DOWN]->click.repeat_interval_ms = 100;
 }
 
+void handle_tick(AppContextRef ctx, PebbleTickEvent *t) {
+	updateMonthText();
+	layer_mark_dirty(&monthLayer);
+}
 
 void handle_init(AppContextRef ctx) {
 	PblTm now;
@@ -490,7 +491,12 @@ void handle_init(AppContextRef ctx) {
 
 void pbl_main(void *params) {
 	PebbleAppHandlers handlers = {
-		.init_handler = &handle_init
+		.init_handler = &handle_init,
+		
+		.tick_info = {
+			.tick_handler = &handle_tick,
+			.tick_units = DAY_UNIT
+		}
 	};
 	app_event_loop(params, &handlers);
 }
