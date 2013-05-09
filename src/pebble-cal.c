@@ -16,13 +16,14 @@
 // Non Working Days Country
 #define NWD_NONE 0
 #define NWD_FRANCE 1
-#define NWD_MAX 2
+#define NWD_USA 2
+#define NWD_MAX 3
 
 // Compilation-time options
-#define LANG_CUR LANG_FRENCH
-#define NWD_COUNTRY NWD_FRANCE
-#define WEEK_STARTS_ON_SUNDAY false
-#define SHOW_WEEK_NUMBERS true
+#define LANG_CUR LANG_ENGLISH
+#define NWD_COUNTRY NWD_USA
+#define WEEK_STARTS_ON_SUNDAY true
+#define SHOW_WEEK_NUMBERS false
 
 #if LANG_CUR == LANG_DUTCH
 #define APP_NAME "Kalender"
@@ -35,6 +36,28 @@
 #else // Defaults to English
 #define APP_NAME "Calendar"
 #endif
+
+#define SUN 0
+#define MON 1
+#define TUE 2
+#define WED 3
+#define THU 4
+#define FRI 5
+#define SAT 6
+
+#define JAN 0
+#define FEB 1
+#define MAR 2
+#define APR 3
+#define MAY 4
+#define JUN 5
+#define JUL 6
+#define AUG 7
+#define SEP 8
+#define OCT 9
+#define NOV 10
+#define DEC 11
+
 
 static const char *windowName = APP_NAME;
 
@@ -100,10 +123,6 @@ typedef struct {
 	Date date;
 } nonWorkingDay;
 
-#if NWD_COUNTRY == NWD_FRANCE
-nonWorkingDay nonWorkingDays[NUM_NON_WORKING_DAYS];
-#endif
-
 static char monthName[40] = "";
 
 static int julianDay(const Date *theDate) {
@@ -138,10 +157,45 @@ static bool isLeapYear(const int Y) {
 static int numDaysInMonth(const int M, const int Y) {
 	static const int nDays[] = { 31,28,31,30,31,30,31,31,30,31,30,31 };
 	
-	return nDays[M] + (M == 1)*isLeapYear(Y);
+	return nDays[M] + (M == FEB)*isLeapYear(Y);
 }
 
 #define Date(d, m, y) ((Date){ (d), (m), (y) })
+
+static void nthWeekdayOfMonth(const int Y, const int M, const int weekday, const int n, Date *theDate) {
+	int firstDayOfMonth, curWeekday, count = 0;
+
+	theDate->day = 1;
+	theDate->month = M;
+	theDate->year = Y;
+	
+	firstDayOfMonth = curWeekday = dayOfWeek(theDate);
+
+	if (firstDayOfMonth == weekday) {
+		count = 1;
+	}
+	while (count < n) {
+		theDate->day++;
+		curWeekday = (curWeekday+1)%7;
+		if (curWeekday == weekday) {
+			count++;
+		}
+	}
+}
+
+static void lastWeekdayOfMonth(const int Y, const int M, const int weekday, Date *theDate) {
+	int curWeekday;
+
+	theDate->day = numDaysInMonth(M, Y);
+	theDate->month = M;
+	theDate->year = Y;
+
+	curWeekday = dayOfWeek(theDate);
+	while (curWeekday != weekday) {
+		theDate->day--;
+		curWeekday = (curWeekday+6)%7;
+	}
+}
 
 static void dateAddDays(Date *date, int numDays) {
 	int i;
@@ -185,21 +239,6 @@ static int compareDates(Date *d1, Date *d2) {
 }
 
 #if NWD_COUNTRY == NWD_FRANCE
-static void sortNonWorkingDays() {
-	int i, j;
-	nonWorkingDay t;
-	
-	for (i=0; i<NUM_NON_WORKING_DAYS-1; i++) {
-		for (j=i+1; j<NUM_NON_WORKING_DAYS; j++) {
-			if (compareDates(&nonWorkingDays[j].date, &nonWorkingDays[i].date) < 0) {
-				t = nonWorkingDays[i];
-				nonWorkingDays[i] = nonWorkingDays[j];
-				nonWorkingDays[j] = t;
-			}
-		}
-	}
-}
-
 static void easterMonday(const int Y, Date *theDate) {
 	int a = Y-(int)(Y/19)*19;
 	int b = (int)(Y/100);
@@ -235,47 +274,61 @@ static void whitMonday(const int Y, Date *theDate) {
 	easterMonday(Y, theDate);
 	dateAddDays(theDate, 49);
 }
+#endif // NWD_COUNTRY == NWD_FRANCE
 
-void computeNonWorkingDays(const int Y) {
-	nonWorkingDay *day = nonWorkingDays;
-	
-	xsprintf(day->name, "Jour de l'an");
-	day->date.day = 1;  day->date.month = 0;  day->date.year = Y; day++; // Jour de l'an
-	xsprintf(day->name, "Fête du travail");
-	day->date.day = 1;  day->date.month = 4;  day->date.year = Y; day++; // Fête du travail
-	xsprintf(day->name, "Armistice 1945");
-	day->date.day = 8;  day->date.month = 4;  day->date.year = Y; day++; // Armistice 1945
-	xsprintf(day->name, "Fête Nationale");
-	day->date.day = 14; day->date.month = 6;  day->date.year = Y; day++; // Fête nationale
-	xsprintf(day->name, "Assomption");
-	day->date.day = 15; day->date.month = 7;  day->date.year = Y; day++; // Assomption
-	xsprintf(day->name, "Toussaint");
-	day->date.day = 1;  day->date.month = 10; day->date.year = Y; day++; // Toussaint
-	xsprintf(day->name, "Armistice 1918");
-	day->date.day = 11; day->date.month = 10; day->date.year = Y; day++; // Armistice 1918
-	xsprintf(day->name, "Noël");
-	day->date.day = 25; day->date.month = 11; day->date.year = Y; day++; // Noël
-	xsprintf(day->name, "Lundi de Pâques");
-	easterMonday(Y, &day->date); day++;
-	xsprintf(day->name, "Jeudi de l'Ascension");
-	ascensionDay(Y, &day->date); day++;
-	xsprintf(day->name, "Lundi de Pentecôte");
-	whitMonday(Y, &day->date);
-	
-	sortNonWorkingDays();
+#if NWD_COUNTRY == NWD_USA
+static void MLKBirthday(const int Y, Date *theDate) {
+	// Third monday in January
+	nthWeekdayOfMonth(Y, JAN, MON, 3, theDate);
 }
 
+static void presidentDay(const int Y, Date *theDate) {
+	// Third monday in February
+	nthWeekdayOfMonth(Y, FEB, MON, 3, theDate);
+}
+
+static void memorialDay(const int Y, Date *theDate) {
+	// Last monday in May
+	lastWeekdayOfMonth(Y, MAY, MON, theDate);
+}
+
+static void laborDay(const int Y, Date *theDate) {
+	// First monday in September
+	nthWeekdayOfMonth(Y, SEP, MON, 1, theDate);
+}
+
+static void columbusDay(const int Y, Date *theDate) {
+	// Second monday in October
+	nthWeekdayOfMonth(Y, OCT, MON, 2, theDate);
+}
+
+static void thanksgivingThursday(const int Y, Date *theDate) {
+	// Fourth thursday in november
+	nthWeekdayOfMonth(Y, NOV, THU, 4, theDate);
+}
+
+static void thanksgivingFriday(const int Y, Date *theDate) {
+	// Friday next to the fourth thursday in november
+	thanksgivingThursday(Y, theDate);
+	dateAddDays(theDate, 1);
+}
+#endif // NWD_COUNTRY == NWD_USA
+
+# if NWD_COUNTRY != NWD_NONE
 static bool isNonWorkingDay(const Date *theDate) {
 	Date d;
 	
-	if (theDate->day == 1  && theDate->month ==  0) return true; // Jour de l'an
-	if (theDate->day == 1  && theDate->month ==  4) return true; // Fête du travail
-	if (theDate->day == 8  && theDate->month ==  4) return true; // Armistice 1945
-	if (theDate->day == 14 && theDate->month ==  6) return true; // Fête nationale
-	if (theDate->day == 15 && theDate->month ==  7) return true; // Assomption
-	if (theDate->day == 1  && theDate->month == 10) return true; // Toussaint
-	if (theDate->day == 11 && theDate->month == 10) return true; // Armistice 1918
-	if (theDate->day == 25 && theDate->month == 11) return true; // Noël
+	// Common public holidays
+	if (theDate->day == 1  && theDate->month == JAN) return true; // New year's day
+	if (theDate->day == 11 && theDate->month == NOV) return true; // Armistice 1918 // Veteran's day
+	if (theDate->day == 25 && theDate->month == DEC) return true; // Noël // Christmas
+
+#if NWD_COUNTRY == NWD_FRANCE
+	if (theDate->day == 1  && theDate->month == MAY) return true; // Fête du travail
+	if (theDate->day == 8  && theDate->month == MAY) return true; // Armistice 1945
+	if (theDate->day == 14 && theDate->month == JUL) return true; // Fête nationale
+	if (theDate->day == 15 && theDate->month == AUG) return true; // Assomption
+	if (theDate->day == 1  && theDate->month == NOV) return true; // Toussaint
 	
 	easterMonday(theDate->year, &d);
 	if (theDate->day == d.day && theDate->month == d.month) return true; // Lundi de Pâques
@@ -284,13 +337,47 @@ static bool isNonWorkingDay(const Date *theDate) {
 	whitMonday(theDate->year, &d);
 	if (theDate->day == d.day && theDate->month == d.month) return true; // Lundi de Pentecôte
 
+#elif NWD_COUNTRY == NWD_USA
+	if (theDate->day == 4 && theDate->month == JUL) return true; // Independence day
+
+	switch (theDate->month) {
+	case JAN:
+		MLKBirthday(theDate->year, &d); 
+		if (theDate->day == d.day && theDate->month == d.month) return true; // Martin Luther King Jr.'s Birthday
+		break;
+	case FEB:
+		presidentDay(theDate->year, &d);
+        	if (theDate->day == d.day && theDate->month == d.month) return true; // President's day
+		break;
+	case MAY:
+		memorialDay(theDate->year, &d);
+        	if (theDate->day == d.day && theDate->month == d.month) return true; // Memorial Day
+		break;
+	case SEP:
+		laborDay(theDate->year, &d);
+        	if (theDate->day == d.day && theDate->month == d.month) return true; // Labor Day
+		break;
+	case OCT:
+		columbusDay(theDate->year, &d);
+        	if (theDate->day == d.day && theDate->month == d.month) return true; // Columbus Day
+		break;
+	case NOV:
+		thanksgivingThursday(theDate->year, &d);
+        	if (theDate->day == d.day && theDate->month == d.month) return true; // Thanksgiving thursday
+		thanksgivingFriday(theDate->year, &d);
+        	if (theDate->day == d.day && theDate->month == d.month) return true; // Thanksgiving friday
+		break;
+	}
+
+#endif
 	return false;
 }
-#else // NWD_COUNTRY == NWD_FRANCE
+
+#else // NWD_COUNTRY != NWD_NONE
 static bool isNonWorkingDay(const Date *theDate) {
 	return false;
 }
-#endif //  NWD_COUNTRY == NWD_FRANCE
+#endif //  NWD_COUNTRY != NWD_NONE
 
 
 void updateMonthText() {
