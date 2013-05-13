@@ -11,7 +11,8 @@
 #define LANG_FRENCH 2
 #define LANG_GERMAN 3
 #define LANG_SPANISH 4
-#define LANG_MAX 5
+#define LANG_ITALIAN 5
+#define LANG_MAX 6
 
 // Non Working Days Country
 #define NWD_NONE 0
@@ -32,6 +33,8 @@
 #elif LANG_CUR == LANG_GERMAN
 #define APP_NAME "Kalender"
 #elif LANG_CUR == LANG_SPANISH
+#define APP_NAME "Calendario"
+#elif LANG_CUR == LANG_ITALIAN
 #define APP_NAME "Calendario"
 #else // Defaults to English
 #define APP_NAME "Calendar"
@@ -70,6 +73,8 @@ static const char *monthNames[] = {
 	"Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"
 #elif LANG_CUR == LANG_SPANISH
 	"Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Augusto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+#elif LANG_CUR == LANG_ITALIAN
+	"Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"
 #else // Defaults to English
 	"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"
 #endif
@@ -84,6 +89,8 @@ static const char *weekDays[] = {
 	"So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"	// German
 #elif LANG_CUR == LANG_SPANISH
 	"Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sá"	// Spanish
+#elif LANG_CUR == LANG_ITALIAN
+	"Do", "Lu", "Ma", "Me", "Gi", "Ve", "Sa"	// Italian
 #else // Defaults to English
 	"Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"	// English
 #endif
